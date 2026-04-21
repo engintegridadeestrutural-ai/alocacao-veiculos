@@ -9,29 +9,56 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <header class="topo">
-    <h1>Alocação de Veículos</h1>
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-card">
+      <h1>Alocação de Veículos</h1>
+      <p class="auth-subtitle">Entre ou crie sua conta para acessar o sistema.</p>
 
-    <div class="acoes-topo">
-      <button id="btnNovaAlocacao">Nova alocação</button>
-      <button id="btnCopiarSemana">Copiar semana</button>
-      <button id="btnGerenciarCadastros">Cadastros</button>
+      <label>Email</label>
+      <input type="email" id="authEmail" placeholder="seuemail@empresa.com" />
+
+      <label>Senha</label>
+      <input type="password" id="authPassword" placeholder="Digite sua senha" />
+
+      <div class="auth-actions">
+        <button id="btnLogin">Entrar</button>
+        <button id="btnSignup" class="btn-secundario">Criar conta</button>
+      </div>
+
+      <p id="authMessage" class="auth-message"></p>
     </div>
-  </header>
-
-  <div class="filtros">
-    <select id="tipoVisualizacao">
-      <option value="dayGridWeek">Semana</option>
-      <option value="dayGridMonth">Mês</option>
-      <option value="multiMonthYear">Ano</option>
-    </select>
-
-    <select id="filtroVeiculo">
-      <option value="">Todos os veículos</option>
-    </select>
   </div>
 
-  <div id="calendar"></div>
+  <div id="appShell" class="app-shell oculto">
+    <header class="topo">
+      <div>
+        <h1>Alocação de Veículos</h1>
+        <div id="usuarioLogado" class="usuario-logado"></div>
+      </div>
+
+      <div class="acoes-topo">
+        <button id="btnNovaAlocacao">Nova alocação</button>
+        <button id="btnCopiarSemana">Copiar semana</button>
+        <button id="btnGerenciarCadastros">Cadastros</button>
+        <button id="btnExportarExcel">Exportar Excel</button>
+        <button id="btnLogout" class="btn-secundario">Sair</button>
+      </div>
+    </header>
+
+    <div class="filtros">
+      <select id="tipoVisualizacao">
+        <option value="dayGridWeek">Semana</option>
+        <option value="dayGridMonth">Mês</option>
+        <option value="multiMonthYear">Ano</option>
+      </select>
+
+      <select id="filtroVeiculo">
+        <option value="">Todos os veículos</option>
+      </select>
+    </div>
+
+    <div id="calendar"></div>
+  </div>
 
   <div id="modalAlocacao" class="modal oculto"></div>
   <div id="modalAuxiliar" class="modal oculto"></div>
@@ -39,6 +66,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

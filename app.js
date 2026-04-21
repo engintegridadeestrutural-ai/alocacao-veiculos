@@ -9,25 +9,128 @@ let localidades = [];
 let pessoas = [];
 let alocacoesCache = [];
 let alocacaoEditandoId = null;
+let usuarioAtual = null;
 
 document.addEventListener("DOMContentLoaded", async function () {
-  await carregarBases();
-  await iniciarCalendario();
-  preencherFiltroVeiculos();
+  configurarEventosAuth();
 
-  document.getElementById("tipoVisualizacao").addEventListener("change", function () {
-    calendar.changeView(this.value);
+  const { data } = await supabaseClient.auth.getUser();
+  usuarioAtual = data.user || null;
+
+  if (usuarioAtual) {
+    await iniciarAplicacao();
+  } else {
+    mostrarTelaAuth();
+  }
+
+  supabaseClient.auth.onAuthStateChange(async (_event, session) => {
+    usuarioAtual = session?.user || null;
+
+    if (usuarioAtual) {
+      await iniciarAplicacao();
+    } else {
+      mostrarTelaAuth();
+    }
   });
-
-  document.getElementById("btnNovaAlocacao").addEventListener("click", function () {
-    const hoje = new Date().toISOString().slice(0, 10);
-    abrirModalAlocacao("novo", { data: hoje });
-  });
-
-  document.getElementById("btnCopiarSemana").addEventListener("click", copiarSemanaAtual);
-  document.getElementById("btnGerenciarCadastros").addEventListener("click", abrirModalCadastros);
-  document.getElementById("filtroVeiculo").addEventListener("change", aplicarFiltroVeiculo);
 });
+
+function configurarEventosAuth() {
+  document.getElementById("btnLogin").addEventListener("click", login);
+  document.getElementById("btnSignup").addEventListener("click", criarConta);
+  document.getElementById("btnLogout").addEventListener("click", logout);
+}
+
+function mostrarMensagemAuth(msg, erro = false) {
+  const el = document.getElementById("authMessage");
+  el.textContent = msg;
+  el.style.color = erro ? "#c62828" : "#444";
+}
+
+function mostrarTelaAuth() {
+  document.getElementById("authScreen").classList.remove("oculto");
+  document.getElementById("appShell").classList.add("oculto");
+}
+
+function mostrarApp() {
+  document.getElementById("authScreen").classList.add("oculto");
+  document.getElementById("appShell").classList.remove("oculto");
+}
+
+async function criarConta() {
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+
+  if (!email || !password) {
+    mostrarMensagemAuth("Preencha email e senha.", true);
+    return;
+  }
+
+  const { error } = await supabaseClient.auth.signUp({
+    email,
+    password
+  });
+
+  if (error) {
+    mostrarMensagemAuth(error.message, true);
+    return;
+  }
+
+  mostrarMensagemAuth("Conta criada com sucesso. Entre com seu email e senha.");
+}
+
+async function login() {
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+
+  if (!email || !password) {
+    mostrarMensagemAuth("Preencha email e senha.", true);
+    return;
+  }
+
+  const { error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    mostrarMensagemAuth(error.message, true);
+    return;
+  }
+
+  mostrarMensagemAuth("Login realizado com sucesso.");
+}
+
+async function logout() {
+  await supabaseClient.auth.signOut();
+}
+
+async function iniciarAplicacao() {
+  mostrarApp();
+  document.getElementById("usuarioLogado").textContent = `Logado como: ${usuarioAtual?.email || ""}`;
+
+  await carregarBases();
+
+  if (!calendar) {
+    await iniciarCalendario();
+
+    document.getElementById("tipoVisualizacao").addEventListener("change", function () {
+      calendar.changeView(this.value);
+    });
+
+    document.getElementById("btnNovaAlocacao").addEventListener("click", function () {
+      const hoje = new Date().toISOString().slice(0, 10);
+      abrirModalAlocacao("novo", { data: hoje });
+    });
+
+    document.getElementById("btnCopiarSemana").addEventListener("click", copiarSemanaAtual);
+    document.getElementById("btnGerenciarCadastros").addEventListener("click", abrirModalCadastros);
+    document.getElementById("filtroVeiculo").addEventListener("change", aplicarFiltroVeiculo);
+    document.getElementById("btnExportarExcel").addEventListener("click", exportarExcel);
+  }
+
+  preencherFiltroVeiculos();
+  atualizarCalendario();
+}
 
 async function carregarBases() {
   await carregarVeiculos();
@@ -92,7 +195,11 @@ async function carregarAlocacoesCache() {
       passageiro_2,
       passageiro_3,
       passageiro_4,
-      veiculos:veiculo_id ( id, nome, cor, placa ),
+      created_at,
+      created_by,
+      updated_at,
+      updated_by,
+      veiculos:veiculo_id ( id, nome, cor, placa, cor_hex ),
       partida:partida_id ( id, nome ),
       destino:destino_id ( id, nome ),
       motorista:motorista_id ( id, nome )
@@ -109,27 +216,19 @@ async function carregarAlocacoesCache() {
 }
 
 function formatarEvento(item) {
-  const passageiros = [
-    item.passageiro_1,
-    item.passageiro_2,
-    item.passageiro_3,
-    item.passageiro_4
-  ].filter(Boolean);
-
-  const passageirosTexto = passageiros.length ? passageiros.join(", ") : "Sem passageiros";
-
   return {
     id: item.id,
     start: item.data,
     allDay: true,
     title: `${item.veiculos?.nome || "Veículo"} - ${item.motorista?.nome || "Sem motorista"}`,
+    backgroundColor: item.veiculos?.cor_hex || undefined,
+    borderColor: item.veiculos?.cor_hex || undefined,
     extendedProps: item
   };
 }
 
 function obterEventosFiltrados() {
   const filtroVeiculo = document.getElementById("filtroVeiculo")?.value || "";
-
   let lista = [...alocacoesCache];
 
   if (filtroVeiculo) {
@@ -177,6 +276,8 @@ async function iniciarCalendario() {
         `Rota: ${item.partida?.nome || "-"} → ${item.destino?.nome || "-"}`,
         `Motorista: ${item.motorista?.nome || "-"}`,
         `Passageiros: ${passageiros.length ? passageiros.join(", ") : "Sem passageiros"}`,
+        `Criado por: ${item.created_by || "-"}`,
+        `Atualizado por: ${item.updated_by || "-"}`,
         `Obs.: ${item.observacao || "-"}`
       ].join("\n");
 
@@ -184,9 +285,9 @@ async function iniciarCalendario() {
 
       const html = `
         <div class="evento-linha">
-          <strong>${item.veiculos?.nome || "Veículo"}</strong>
-          <div>${item.partida?.nome || "-"} → ${item.destino?.nome || "-"}</div>
-          <div>Motorista: ${item.motorista?.nome || "-"}</div>
+          <strong>🚗 ${item.veiculos?.nome || "Veículo"}</strong>
+          <div>📍 ${item.partida?.nome || "-"} → ${item.destino?.nome || "-"}</div>
+          <div>👨 ${item.motorista?.nome || "-"}</div>
         </div>
       `;
 
@@ -408,6 +509,9 @@ function abrirModalNovoVeiculo(selectDestinoId) {
       <label>Placa</label>
       <input type="text" id="novoVeiculoPlaca" />
 
+      <label>Cor hex (opcional)</label>
+      <input type="text" id="novoVeiculoCorHex" placeholder="#1f4e79" />
+
       <div class="acoes-modal">
         <button type="button" id="btnSalvarVeiculo">Salvar</button>
         <button type="button" class="btn-secundario" id="btnFecharAuxiliar">Fechar</button>
@@ -423,6 +527,7 @@ function abrirModalNovoVeiculo(selectDestinoId) {
     const nome = document.getElementById("novoVeiculoNome").value.trim();
     const cor = document.getElementById("novoVeiculoCor").value.trim();
     const placa = document.getElementById("novoVeiculoPlaca").value.trim();
+    const cor_hex = document.getElementById("novoVeiculoCorHex").value.trim();
 
     if (!nome) {
       alert("Informe o nome do veículo.");
@@ -431,7 +536,7 @@ function abrirModalNovoVeiculo(selectDestinoId) {
 
     const { data, error } = await supabaseClient
       .from("veiculos")
-      .insert([{ nome, cor, placa, ativo: true }])
+      .insert([{ nome, cor, placa, cor_hex, ativo: true }])
       .select()
       .single();
 
@@ -521,11 +626,36 @@ async function salvarAlocacao() {
     passageiro_2: document.getElementById("pass2").value.trim(),
     passageiro_3: document.getElementById("pass3").value.trim(),
     passageiro_4: document.getElementById("pass4").value.trim(),
-    observacao: document.getElementById("alcObs").value.trim()
+    observacao: document.getElementById("alcObs").value.trim(),
+    updated_at: new Date().toISOString(),
+    updated_by: usuarioAtual?.email || null
   };
 
   if (!payload.data || !payload.veiculo_id || !payload.partida_id || !payload.destino_id || !payload.motorista_id) {
     alert("Preencha data, veículo, partida, destino e motorista.");
+    return;
+  }
+
+  const conflitosMesmoDia = alocacoesCache.filter(a =>
+    a.data === payload.data &&
+    String(a.id) !== String(alocacaoEditandoId || "")
+  );
+
+  const conflitoVeiculo = conflitosMesmoDia.find(a => Number(a.veiculos?.id) === payload.veiculo_id);
+  if (conflitoVeiculo) {
+    alert(
+      `Não foi possível salvar.\n\n` +
+      `O veículo "${conflitoVeiculo.veiculos?.nome || ""}" já está alocado em ${payload.data}.`
+    );
+    return;
+  }
+
+  const conflitoMotorista = conflitosMesmoDia.find(a => Number(a.motorista?.id) === payload.motorista_id);
+  if (conflitoMotorista) {
+    alert(
+      `Não foi possível salvar.\n\n` +
+      `O motorista "${conflitoMotorista.motorista?.nome || ""}" já está alocado em ${payload.data}.`
+    );
     return;
   }
 
@@ -537,6 +667,9 @@ async function salvarAlocacao() {
       .update(payload)
       .eq("id", alocacaoEditandoId));
   } else {
+    payload.created_at = new Date().toISOString();
+    payload.created_by = usuarioAtual?.email || null;
+
     ({ error } = await supabaseClient
       .from("alocacoes")
       .insert([payload]));
@@ -548,11 +681,12 @@ async function salvarAlocacao() {
     return;
   }
 
+  alert("Alocação salva com sucesso.");
+
   document.getElementById("modalAlocacao").classList.add("oculto");
   await carregarAlocacoesCache();
   atualizarCalendario();
 }
-
 async function excluirAlocacao() {
   if (!alocacaoEditandoId) return;
 
@@ -620,7 +754,11 @@ async function copiarSemanaAtual() {
       passageiro_2: item.passageiro_2,
       passageiro_3: item.passageiro_3,
       passageiro_4: item.passageiro_4,
-      observacao: item.observacao
+      observacao: item.observacao,
+      created_at: new Date().toISOString(),
+      created_by: usuarioAtual?.email || null,
+      updated_at: new Date().toISOString(),
+      updated_by: usuarioAtual?.email || null
     };
   });
 
@@ -637,6 +775,28 @@ async function copiarSemanaAtual() {
   await carregarAlocacoesCache();
   atualizarCalendario();
   alert("Semana copiada com sucesso.");
+}
+
+function exportarExcel() {
+  const dados = alocacoesCache.map(item => ({
+    Data: item.data,
+    Veículo: item.veiculos?.nome || "",
+    Partida: item.partida?.nome || "",
+    Destino: item.destino?.nome || "",
+    Motorista: item.motorista?.nome || "",
+    Passageiro1: item.passageiro_1 || "",
+    Passageiro2: item.passageiro_2 || "",
+    Passageiro3: item.passageiro_3 || "",
+    Passageiro4: item.passageiro_4 || "",
+    Observação: item.observacao || "",
+    CriadoPor: item.created_by || "",
+    AtualizadoPor: item.updated_by || ""
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(dados);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Alocacoes");
+  XLSX.writeFile(workbook, "alocacoes.xlsx");
 }
 
 function abrirModalCadastros() {
@@ -692,6 +852,7 @@ function renderizarListaCadastros() {
         <strong>${v.nome}</strong>
         <div>Cor: ${v.cor || "-"}</div>
         <div>Placa: ${v.placa || "-"}</div>
+        <div>Hex: ${v.cor_hex || "-"}</div>
         <div class="item-acoes">
           <button type="button" onclick="abrirFormularioEdicaoVeiculo(${v.id})">Editar</button>
           <button type="button" class="btn-perigo" onclick="excluirVeiculo(${v.id})">Excluir</button>
@@ -744,6 +905,9 @@ function abrirFormularioEdicaoVeiculo(id = null) {
       <label>Placa</label>
       <input type="text" id="editVeiculoPlaca" value="${item?.placa || ""}" />
 
+      <label>Cor hex</label>
+      <input type="text" id="editVeiculoCorHex" value="${item?.cor_hex || ""}" placeholder="#1f4e79" />
+
       <div class="acoes-modal">
         <button type="button" id="btnSalvarEditVeiculo">${id ? "Salvar alterações" : "Salvar"}</button>
         <button type="button" class="btn-secundario" id="btnFecharAuxiliar">Fechar</button>
@@ -758,6 +922,7 @@ function abrirFormularioEdicaoVeiculo(id = null) {
       nome: document.getElementById("editVeiculoNome").value.trim(),
       cor: document.getElementById("editVeiculoCor").value.trim(),
       placa: document.getElementById("editVeiculoPlaca").value.trim(),
+      cor_hex: document.getElementById("editVeiculoCorHex").value.trim(),
       ativo: true
     };
 
@@ -783,6 +948,7 @@ function abrirFormularioEdicaoVeiculo(id = null) {
     await carregarVeiculos();
     preencherFiltroVeiculos();
     renderizarListaCadastros();
+    atualizarCalendario();
     modal.classList.add("oculto");
   };
 }
@@ -918,6 +1084,7 @@ async function excluirVeiculo(id) {
   await carregarVeiculos();
   preencherFiltroVeiculos();
   renderizarListaCadastros();
+  atualizarCalendario();
 }
 
 async function excluirLocalidade(id) {
