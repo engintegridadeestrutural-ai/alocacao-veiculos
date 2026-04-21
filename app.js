@@ -1124,3 +1124,22 @@ async function excluirPessoa(id) {
   await carregarPessoas();
   renderizarListaCadastros();
 }
+function verificarOrientacaoMobile() {
+  const aviso = document.getElementById("rotateNotice");
+  if (!aviso) return;
+
+  const isMobile = window.innerWidth <= 768;
+  const isPortrait = window.innerHeight > window.innerWidth;
+
+  if (isMobile && isPortrait) {
+    aviso.classList.remove("oculto");
+  } else {
+    aviso.classList.add("oculto");
+  }
+}
+window.addEventListener("resize", verificarOrientacaoMobile);
+window.addEventListener("orientationchange", verificarOrientacaoMobile);
+
+document.addEventListener("DOMContentLoaded", () => {
+  verificarOrientacaoMobile();
+});

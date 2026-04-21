@@ -244,3 +244,29 @@ body {
 .evento-linha strong {
   display: block;
 }
+.rotate-notice {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.96);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.rotate-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 320px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+@media (orientation: landscape) {
+  .rotate-notice {
+    display: none !important;
+  }
+}
