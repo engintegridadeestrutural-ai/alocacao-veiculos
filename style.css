@@ -1,0 +1,194 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f5f5f5;
+}
+
+.topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.acoes-topo {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.acoes-topo button,
+.filtros select,
+.caixa-modal button,
+.caixa-modal .btn-secundario,
+.caixa-modal .btn-perigo {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.filtros {
+  padding: 12px 24px;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#calendar {
+  max-width: 1280px;
+  margin: 20px auto;
+  background: #fff;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 16px;
+}
+
+.modal.oculto {
+  display: none;
+}
+
+.caixa-modal {
+  width: 520px;
+  max-width: 95%;
+  max-height: 90vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.caixa-modal.modal-grande {
+  width: 1000px;
+}
+
+.caixa-modal h2,
+.caixa-modal h3 {
+  margin-top: 0;
+}
+
+.caixa-modal label {
+  display: block;
+  margin-top: 10px;
+  margin-bottom: 4px;
+  font-weight: bold;
+}
+
+.caixa-modal input,
+.caixa-modal select,
+.caixa-modal textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+}
+
+.linha-com-botao {
+  display: flex;
+  gap: 8px;
+}
+
+.linha-com-botao select {
+  flex: 1;
+}
+
+.linha-com-botao button {
+  width: 44px;
+  flex-shrink: 0;
+}
+
+.acoes-modal {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.btn-perigo {
+  background: #c62828;
+  color: #fff;
+  border: none;
+}
+
+.btn-secundario {
+  background: #eceff1;
+  border: 1px solid #ccc;
+}
+
+.grid-cadastros {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+@media (min-width: 980px) {
+  .grid-cadastros {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.bloco-cadastro {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.lista-cadastro {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item-cadastro {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px;
+  background: #fff;
+}
+
+.item-cadastro strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.item-acoes {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.fc-event-title {
+  white-space: normal !important;
+}
+
+.evento-linha {
+  line-height: 1.25;
+  font-size: 12px;
+}
+
+.evento-linha strong {
+  display: block;
+}
+
+.ajuda {
+  color: #666;
+  font-size: 12px;
+  margin-top: 6px;
+}

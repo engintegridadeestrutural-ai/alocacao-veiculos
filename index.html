@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Alocação de Veículos</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topo">
+    <h1>Alocação de Veículos</h1>
+
+    <div class="acoes-topo">
+      <button id="btnNovaAlocacao">Nova alocação</button>
+      <button id="btnCopiarSemana">Copiar semana</button>
+      <button id="btnGerenciarCadastros">Cadastros</button>
+    </div>
+  </header>
+
+  <div class="filtros">
+    <select id="tipoVisualizacao">
+      <option value="dayGridWeek">Semana</option>
+      <option value="dayGridMonth">Mês</option>
+      <option value="multiMonthYear">Ano</option>
+    </select>
+
+    <select id="filtroVeiculo">
+      <option value="">Todos os veículos</option>
+    </select>
+  </div>
+
+  <div id="calendar"></div>
+
+  <div id="modalAlocacao" class="modal oculto"></div>
+  <div id="modalAuxiliar" class="modal oculto"></div>
+  <div id="modalCadastros" class="modal oculto"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
