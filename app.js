@@ -12,98 +12,18 @@ let alocacaoEditandoId = null;
 let usuarioAtual = null;
 
 document.addEventListener("DOMContentLoaded", async function () {
-  configurarEventosAuth();
+  usuarioAtual = { email: "acesso_livre" };
 
-  const { data } = await supabaseClient.auth.getUser();
-  usuarioAtual = data.user || null;
-
-  if (usuarioAtual) {
-    await iniciarAplicacao();
-  } else {
-    mostrarTelaAuth();
-  }
-
-  supabaseClient.auth.onAuthStateChange(async (_event, session) => {
-    usuarioAtual = session?.user || null;
-
-    if (usuarioAtual) {
-      await iniciarAplicacao();
-    } else {
-      mostrarTelaAuth();
-    }
-  });
+  verificarOrientacaoMobile();
+  await iniciarAplicacao();
 });
 
-function configurarEventosAuth() {
-  document.getElementById("btnLogin").addEventListener("click", login);
-  document.getElementById("btnSignup").addEventListener("click", criarConta);
-  document.getElementById("btnLogout").addEventListener("click", logout);
-}
-
-function mostrarMensagemAuth(msg, erro = false) {
-  const el = document.getElementById("authMessage");
-  el.textContent = msg;
-  el.style.color = erro ? "#c62828" : "#444";
-}
-
-function mostrarTelaAuth() {
-  document.getElementById("authScreen").classList.remove("oculto");
-  document.getElementById("appShell").classList.add("oculto");
-}
-
 function mostrarApp() {
-  document.getElementById("authScreen").classList.add("oculto");
-  document.getElementById("appShell").classList.remove("oculto");
-}
-
-async function criarConta() {
-  const email = document.getElementById("authEmail").value.trim();
-  const password = document.getElementById("authPassword").value;
-
-  if (!email || !password) {
-    mostrarMensagemAuth("Preencha email e senha.", true);
-    return;
+  const appShell = document.getElementById("appShell");
+  if (appShell) {
+    appShell.classList.remove("oculto");
   }
-
-  const { error } = await supabaseClient.auth.signUp({
-    email,
-    password
-  });
-
-  if (error) {
-    mostrarMensagemAuth(error.message, true);
-    return;
-  }
-
-  mostrarMensagemAuth("Conta criada com sucesso. Entre com seu email e senha.");
 }
-
-async function login() {
-  const email = document.getElementById("authEmail").value.trim();
-  const password = document.getElementById("authPassword").value;
-
-  if (!email || !password) {
-    mostrarMensagemAuth("Preencha email e senha.", true);
-    return;
-  }
-
-  const { error } = await supabaseClient.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  if (error) {
-    mostrarMensagemAuth(error.message, true);
-    return;
-  }
-
-  mostrarMensagemAuth("Login realizado com sucesso.");
-}
-
-async function logout() {
-  await supabaseClient.auth.signOut();
-}
-
 async function iniciarAplicacao() {
   mostrarApp();
   document.getElementById("usuarioLogado").textContent = `Logado como: ${usuarioAtual?.email || ""}`;
